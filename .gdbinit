@@ -1394,7 +1394,6 @@ end
 
 # Better GDB defaults ----------------------------------------------------------
 
-set breakpoint pending on
 set history save
 set history expansion on
 set confirm off
