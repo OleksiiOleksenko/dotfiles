@@ -1394,6 +1394,7 @@ end
 
 # Better GDB defaults ----------------------------------------------------------
 
+set breakpoint pending on
 set history save
 set history expansion on
 set confirm off
@@ -1558,7 +1559,6 @@ end
 # Start ------------------------------------------------------------------------
 
 python Dashboard.start()
-set breakpoint pending on
 
 # ------------------------------------------------------------------------------
 # Copyright (c) 2015-2017 Andrea Cardaci <cyrus.and@gmail.com>
