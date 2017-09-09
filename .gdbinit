@@ -1,7 +1,7 @@
 python
 
 # based on https://github.com/c02y/dotfiles/blob/master/gdb/.gdbinit
-# install: wget -P ~ https://github.com/OleksiiOleksenko/dotfiles/blob/master/.gdbini
+# install: wget -P ~ https://raw.githubusercontent.com/OleksiiOleksenko/dotfiles/master/.gdbinit
 
 # GDB dashboard - Modular visual interface for GDB in Python.
 #
