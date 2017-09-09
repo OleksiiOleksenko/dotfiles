@@ -1561,6 +1561,10 @@ end
 
 python Dashboard.start()
 
+# Dashboard config
+dashboard source -style context 10
+dashboard assembly -style context 10
+
 # ------------------------------------------------------------------------------
 # Copyright (c) 2015-2017 Andrea Cardaci <cyrus.and@gmail.com>
 #
