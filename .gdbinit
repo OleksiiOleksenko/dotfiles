@@ -1,7 +1,7 @@
 python
 
 # based on https://github.com/c02y/dotfiles/blob/master/gdb/.gdbinit
-# install: wget -P ~ https://github.com/OleksiiOleksenko/dotfiles/blob/master/.gdbinit
+# install: wget -P ~ https://github.com/OleksiiOleksenko/dotfiles/blob/master/.gdbini
 
 # GDB dashboard - Modular visual interface for GDB in Python.
 #
@@ -1398,6 +1398,7 @@ set history save
 set history expansion on
 set confirm off
 set verbose off
+set breakpoint pending on
 # about print-setting
 # ftp://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_57.html
 set print pretty on
@@ -1410,6 +1411,7 @@ set print static-members on
 set print union on
 set print vtbl on
 set print thread-events on
+
 
 set python print-stack full
 set history file ~/.gdb_history
