@@ -17,13 +17,8 @@ alias l='ls -ltrah'
 alias rm='rm -i'
 alias prj="cd /ssd/projects/"
 alias wrk='cd /ssd/projects/work/'
-alias cpr='cd /ssd/projects/work/cat_project'
-alias sft='cd /ssd/projects/teaching/sft16'
-alias tch='cd /ssd/projects/teaching'
 alias ..='cd ..'
 alias c='clear'
-alias cwin='cd "/run/media/alexo_o/148C70938C70715A"'
-alias csft='cd "/run/media/alexo_o/148C70938C70715A/0 Education/0 TUD/01. SFT/00_Lab"' 
 alias h='history'
 
 eval `keychain --eval --agents ssh id_rsa`
@@ -31,9 +26,6 @@ eval `keychain --eval --agents ssh id_rsa`
 function cs() {
     cd "$@" && ls 
 }
-
-# TMP
-alias fbs='cd ${HOME}/0_Projects/work/simd-swift/exp/02_fi/'
 
 #GIT
 alias gst='git status -sb'
@@ -58,11 +50,8 @@ export PATH
 
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export DEV_MACHINE=1
-export wrk=/ssd/projects/work/
 
 #Docker
-alias dost='sudo service docker start'
-
 alias dockerkillall='sudo docker kill $(docker ps -q)'
 alias dockercleanc='printf "\n>>> Deleting stopped containers\n\n" && sudo docker rm $(sudo docker ps -a -q)'
 alias dockercleani='printf "\n>>> Deleting untagged images\n\n" && sudo docker rmi $(sudo docker images -q -f dangling=true)'
