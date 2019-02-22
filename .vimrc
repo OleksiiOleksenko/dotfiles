@@ -26,8 +26,11 @@ Plugin 'git://git.wincent.com/command-t.git'
 " Avoid a name conflict with L9
 " Plugin 'user/L9', {'name': 'newL9'}
 Plugin 'godlygeek/tabular'
-Plugin 'plasticboy/vim-markdown'
+"Plugin 'plasticboy/vim-markdown'
 Plugin 'fatih/vim-go'
+"Bundle 'aserebryakov/vim-todo-lists'
+" Bundle 'gabrielelana/vim-markdown'
+
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -67,6 +70,12 @@ set novisualbell        " turn off visual bell
 
 set backspace=indent,eol,start  " make that backspace key work the way it should
 set runtimepath=$VIMRUNTIME     " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
+
+" Tabs control
+set expandtab
+set tabstop=4
+set shiftwidth=4
+autocmd FileType make setlocal noexpandtab
 
 filetype on             " detect type of file
 filetype indent on      " load indent file for specific file type

@@ -3,53 +3,49 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-# Customize to your needs...
-alias dude='man'
-alias sbl='sublime'
-alias ym='yelp man'
-
-# Editors
-alias sublime='/bin/Sublime/./sublime_text'
-alias eclipse='/bin/eclipse/./eclipse'
-
 # Shell
-alias l='ls -ltrah'
+alias l='ls -trh'
+alias ll='ls -ltrah'
 alias rm='rm -i'
+
 alias prj="cd /ssd/projects/"
 alias wrk='cd /ssd/projects/work/'
+alias fuzp='cd /ssd/projects/work/speculative_projects/spectre-defences'
+
 alias ..='cd ..'
 alias c='clear'
 alias h='history'
+alias mdump="objdump --no-show-raw-insn -d -j .text"
+alias s="s -p duckduckgo"
+
+## Task
+alias ami="aide mod -i"
 
 eval `keychain --eval --agents ssh id_rsa`
 
-function cs() {
-    cd "$@" && ls 
+function rmnd() {
+    echo "notify-send -t 0 $1" | at now + $2 $3
 }
 
 #GIT
 alias gst='git status -sb'
-alias gstg='git stage'
 alias gl='git log --oneline --all --graph --decorate'
 alias ga='git add -i'
 alias gaa='git add .'
 alias gc='git commit'
 alias gco='git checkout'
-alias grh='git reset HEAD'
-
-#Mercurial
-alias hst='hg status'
-alias hl='hg log -g -G -l 5'
-alias hc='hg commit'
 
 #Env. variables
-PATH=$PATH:$GOPATH/bin
+pathadd $GOPATH
+pathadd /home/alex/scripts/
+#PATH=$PATH:$GOPATH/bin
 
 export CLASSPATH
 export PATH
 
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export DEV_MACHINE=1
+export CHECKBIWPATH=~/bin/latex-template/checkbiw/src
 
 #Docker
 alias dockerkillall='sudo docker kill $(docker ps -q)'
@@ -60,3 +56,4 @@ alias dockerclean='dockercleanc || true && dockercleani'
 # Go
 export GOPATH=$HOME/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on'

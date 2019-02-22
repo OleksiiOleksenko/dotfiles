@@ -1,8 +1,5 @@
 python
 
-# based on https://github.com/c02y/dotfiles/blob/master/gdb/.gdbinit
-# install: wget -P ~ https://raw.githubusercontent.com/OleksiiOleksenko/dotfiles/master/.gdbinit
-
 # GDB dashboard - Modular visual interface for GDB in Python.
 #
 # https://github.com/cyrus-and/gdb-dashboard
@@ -14,6 +11,7 @@ import re
 import struct
 import termios
 import traceback
+import math
 
 # Common attributes ------------------------------------------------------------
 
@@ -174,7 +172,8 @@ def check_ge_zero(x):
 def to_unsigned(value, size=8):
     # values from GDB can be used transparently but are not suitable for
     # being printed as unsigned integers, so a conversion is needed
-    return int(value.cast(gdb.Value(0).type)) % (2 ** (size * 8))
+    mask = (2 ** (size * 8)) - 1
+    return int(value.cast(gdb.Value(mask).type)) & mask
 
 def to_string(value):
     # attempt to convert an inferior value to string; OK when (Python 3 ||
@@ -190,8 +189,9 @@ def format_address(address):
     pointer_size = gdb.parse_and_eval('$pc').type.sizeof
     return ('0x{{:0{}x}}').format(pointer_size * 2).format(address)
 
-class Highlighter():
-    def __init__(self, filename):
+class Beautifier():
+    def __init__(self, filename, tab_size=4):
+        self.tab_spaces = ' ' * tab_size
         self.active = False
         if not R.ansi:
             return
@@ -211,6 +211,8 @@ class Highlighter():
             pass
 
     def process(self, source):
+        # convert tabs anyway
+        source = source.replace('\t', self.tab_spaces)
         if self.active:
             import pygments
             source = pygments.highlight(source, self.lexer, self.formatter)
@@ -231,9 +233,9 @@ class Dashboard(gdb.Command):
         Dashboard.LayoutCommand(self)
         # setup style commands
         Dashboard.StyleCommand(self, 'dashboard', R, R.attributes())
-        # enable by default
+        # disabled by default
         self.enabled = None
-        self.enable()
+        self.disable()
 
     def on_continue(self, _):
         # try to contain the GDB messages in a specified area unless the
@@ -294,7 +296,7 @@ class Dashboard(gdb.Command):
 
     def redisplay(self, style_changed=False):
         # manually redisplay the dashboard
-        if self.is_running():
+        if self.is_running() and self.enabled:
             self.render(True, style_changed)
 
     def inferior_pid(self):
@@ -390,6 +392,9 @@ class Dashboard(gdb.Command):
         Dashboard.parse_inits(False)
         # GDB overrides
         run('set pagination off')
+        # enable and display if possible (program running)
+        dashboard.enable()
+        dashboard.redisplay()
 
     @staticmethod
     def get_term_width(fd=1):  # defaults to the main terminal
@@ -667,7 +672,7 @@ files."""
                 name = directive[not enabled:]
                 try:
                     # it may actually start from last, but in this way repeated
-                    # modules can be handler transparently and without error
+                    # modules can be handled transparently and without error
                     todo = enumerate(modules[last:], start=last)
                     index = next(i for i, m in todo if name == m.name)
                     modules[index].enabled = enabled
@@ -678,7 +683,7 @@ files."""
                     def find_module(x):
                         return x.name == name
                     first_part = modules[:last]
-                    if len(filter(find_module, first_part)) == 0:
+                    if len(list(filter(find_module, first_part))) == 0:
                         Dashboard.err('Cannot find module "{}"'.format(name))
                     else:
                         Dashboard.err('Module "{}" already set'.format(name))
@@ -792,7 +797,7 @@ class Source(Dashboard.Module):
             self.file_name = file_name
             self.ts = ts
             try:
-                highlighter = Highlighter(self.file_name)
+                highlighter = Beautifier(self.file_name, self.tab_size)
                 self.highlighted = highlighter.active
                 with open(self.file_name) as source_file:
                     source = highlighter.process(source_file.read())
@@ -833,6 +838,13 @@ class Source(Dashboard.Module):
                 'default': 5,
                 'type': int,
                 'check': check_ge_zero
+            },
+            'tab-size': {
+                'doc': 'Number of spaces used to display the tab character.',
+                'default': 4,
+                'name': 'tab_size',
+                'type': int,
+                'check': check_gt_zero
             }
         }
 
@@ -886,7 +898,11 @@ instructions constituting the current statement are marked, if available."""
             'intel': '.asm'
         }.get(flavor, '.s')
         # prepare the highlighter
-        highlighter = Highlighter(filename)
+        highlighter = Beautifier(filename)
+        # compute the maximum offset size
+        if func_start:
+            max_offset = max(len(str(abs(asm[0]['addr'] - func_start))),
+                             len(str(abs(asm[-1]['addr'] - func_start))))
         # return the machine code
         max_length = max(instr['length'] for instr in asm)
         inferior = gdb.selected_inferior()
@@ -907,9 +923,9 @@ instructions constituting the current statement are marked, if available."""
             # compute the offset if available
             if self.show_function:
                 if func_start:
-                    max_offset = len(str(asm[-1]['addr'] - func_start))
-                    offset = str(addr - func_start).ljust(max_offset)
-                    func_info = '{}+{} '.format(frame.name(), offset)
+                    offset = '{:+d}'.format(addr - func_start)
+                    offset = offset.ljust(max_offset + 1)  # sign
+                    func_info = '{}{} '.format(frame.name(), offset)
                 else:
                     func_info = '? '
             else:
@@ -1286,9 +1302,27 @@ class Registers(Dashboard.Module):
             styled_value = ansi(value.ljust(max_value), value_style)
             partial.append(styled_name + ' ' + styled_value)
         out = []
-        for i in range(0, len(partial), per_line):
-            out.append(' '.join(partial[i:i + per_line]).rstrip())
+        if self.column_major:
+            num_lines = int(math.ceil(float(len(partial)) / per_line))
+            for i in range(num_lines):
+                line = ' '.join(partial[i:len(partial):num_lines]).rstrip()
+                real_n_col = math.ceil(float(len(partial)) / num_lines)
+                line = ' ' * int((per_line - real_n_col) * max_width / 2) + line
+                out.append(line)
+        else:
+            for i in range(0, len(partial), per_line):
+                out.append(' '.join(partial[i:i + per_line]).rstrip())
         return out
+
+    def attributes(self):
+        return {
+            'column-major': {
+                'doc': 'Whether to show registers in columns instead of rows.',
+                'default': False,
+                'name': 'column_major',
+                'type': bool
+            }
+        }
 
     @staticmethod
     def format_value(value):
@@ -1395,167 +1429,12 @@ end
 # Better GDB defaults ----------------------------------------------------------
 
 set history save
-set history expansion on
 set confirm off
 set verbose off
-set breakpoint pending on
-# about print-setting
-# ftp://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_57.html
 set print pretty on
-set print array on
+set print array off
 set print array-indexes on
-set print symbol-filename on
-set print demangle on
-set print object on
-set print static-members on
-set print union on
-set print vtbl on
-set print thread-events on
-
-
 set python print-stack full
-set history file ~/.gdb_history
-set history save
-define dod
-	dashboard -output /dev/pts/$arg0
-end
-define dos
-	dashboard source -style context 15
-	dashboard source -output /dev/pts/$arg0
-end
-
-define dsl
-	dashboard source -style context $arg0
-end
-
-define btf
-	backtrace full
-end
-
-# source and assembly use context
-define dcl
-	dashboard $arg0 -style context $arg1
-end
-# stack and history use limit
-define dll
-	dashboard $arg0 -style limit $arg1
-end
-
-# TODO:Find a better way to disable the default q for quit
-define q
-	print "Use quit to quit!!!"
-end
-
-define its
-	info threads
-end
-define it
-	info thread $arg0
-end
-
-define pv
-    if $argc == 2
-        set $elem = $arg0.size()
-        if $arg1 >= $arg0.size()
-            printf "Error, %s.size() = %d, printing last element:\n", "$arg0", $arg0.size()
-            set $elem = $arg1 -1
-        end
-        print *($arg0._M_impl._M_start + $elem)@1
-    else
-        print *($arg0._M_impl._M_start)@$arg0.size()
-    end
-end
-document pv
-Display vector contents
-Usage: pv VECTOR_NAME INDEX
-VECTOR_NAME is the name of the vector
-INDEX is an optional argument specifying the element to display
-end
-
-# check https://gist.github.com/CocoaBeans/1879270 for how to use gdb
-define pa
-    x/100w $arg0
-end
-document pa
-Print array
-Usage: pa array
-NOTE: the output contains a lot of extra info
-end
-
-define pl
-    if $argc == 1
-        print $arg0
-    end
-    if $argc == 2
-        print $arg0
-        print $arg1
-    end
-    if $argc == 3
-        print $arg0
-        print $arg1
-        print $arg2
-    end
-    if $argc == 4
-        print $arg0
-        print $arg1
-        print $arg2
-        print $arg3
-    end
-end
-document pl
-Print values of arg list
-Usage: pl a1 a2 a3...
-Check `info locals` for info
-end
-
-define bl
-    info breakpoints
-end
-define ib
-    info breakpoints
-end
-define bm
-    if $argc == 1
-        break $arg0
-    end
-    if $argc == 2
-        break $arg0
-        break $arg1
-    end
-    if $argc == 3
-        break $arg0
-        break $arg1
-        break $arg2
-    end
-    if $argc == 4
-        break $arg0
-        break $arg1
-        break $arg2
-        break $arg3
-    end
-end
-document bm
-Set multiple breakpoints in one line
-Delete multiple breakpoints in one line can use builtin `del N1 N2...`
-Usage: bm a1 a2 a3...
-end
-
-define wai
-    frame
-end
-document wai
-    Show the current line
-end
-define timeme
-    python import time
-    python starttime=time.time()
-	n
-    python print("Previous takes: " + (str)(time.time()-starttime) + "s")
-end
-document timeme
-    Measure executing time of next function
-    Usage: timeme or ti
-end
 
 # Start ------------------------------------------------------------------------
 

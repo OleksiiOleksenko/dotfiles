@@ -1,11 +1,16 @@
+# This is Git's per-user configuration file.
 [user]
-    name = XXX
-    email = XXX
+# Please adapt and uncomment the following lines:
+#	name = Oleksii Oleksenko
+#	email = alexo_o@ukr.net
+[user]
+	name = Oleksii Oleksenko
+	email = alexo_o@ukr.net
 [core]
-    editor = vim
+	editor = vim
 [push]
-    default = simple
+	default = simple
 [filter "lfs"]
-    clean = git-lfs clean %f
-    smudge = git-lfs smudge %f
-    required = true
+	clean = git-lfs clean %f
+	smudge = git-lfs smudge %f
+	required = true
