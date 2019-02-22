@@ -27,6 +27,12 @@ function rmnd() {
     echo "notify-send -t 0 $1" | at now + $2 $3
 }
 
+function pathadd() {
+    if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
+        PATH="${PATH:+"$PATH:"}$1"
+    fi
+}
+
 #GIT
 alias gst='git status -sb'
 alias gl='git log --oneline --all --graph --decorate'
