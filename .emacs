@@ -73,7 +73,7 @@
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(package-selected-packages
    (quote
-    (bind-key color-theme-sanityinc-tomorrow spacemacs-theme solarized-theme material-theme zenburn-theme powerline powerline-evil evil oceanic-theme dracula-theme ##)))
+    (evil-mc bind-key color-theme-sanityinc-tomorrow spacemacs-theme solarized-theme material-theme zenburn-theme powerline powerline-evil evil oceanic-theme dracula-theme ##)))
  '(pdf-view-midnight-colors (quote ("#b2b2b2" . "#292b2e")))
  '(pos-tip-background-color "#073642")
  '(pos-tip-foreground-color "#93a1a1")
@@ -156,6 +156,11 @@ There are two things you can do about this warning:
 (define-key evil-insert-state-map [escape] 'evil-normal-state)
 
 (setq evil-search-module 'evil-search)
+
+;; Multicursor
+(require 'evil-mc)
+(global-evil-mc-mode 1)
+
 
 ;; ORG-MODE
 (require 'org)
@@ -243,6 +248,8 @@ with `my-org-list-get-item-end-before-blank' which see."
 (define-key evil-insert-state-map (kbd "S-<delete>") 'kill-whole-line)
 
 (bind-key (kbd "<M-return>") 'org-insert-heading-after-current org-mode-map)
+
+(define-key global-map [remap evil-mc-make-and-goto-next-match] 'evil-mc-make-cursor-here)
 
 (cua-mode 1)
 ;; Parentheses
